@@ -130,6 +130,7 @@ EMAIL_BACKEND = (
 EMAIL_HOST          = 'smtp.gmail.com'
 EMAIL_PORT          = 587
 EMAIL_USE_TLS       = True
+EMAIL_TIMEOUT       = 10  # seconds — prevents worker timeout on slow SMTP
 EMAIL_HOST_USER     = _email_user
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS', '')
 DEFAULT_FROM_EMAIL  = os.environ.get(
