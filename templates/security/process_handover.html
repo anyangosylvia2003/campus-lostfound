@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Process Handover{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <h1><i class="bi bi-box-arrow-right me-2"></i>Process Handover</h1>
+    <p>Record physical item collection — this creates a permanent audit log</p>
+  </div>
+</div>
+<div class="container pb-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+
+      <div class="card border-0 shadow-sm mb-4" style="border-radius:14px; background:#D1FAE5; border:1px solid #6EE7B7 !important;">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-check-circle-fill text-success fs-2"></i>
+            <div>
+              <h6 class="fw-bold mb-0">Claim Approved</h6>
+              <p class="mb-0 text-muted small">Record the physical handover below to complete the process.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-4" style="border-radius:14px;">
+        <div class="card-body p-3">
+          <div class="d-flex gap-2 mb-2">
+            <span class="badge badge-found rounded-pill">Found</span>
+            <span class="badge badge-{{ claim.item.category }} rounded-pill">{{ claim.item.get_category_display }}</span>
+          </div>
+          <h5 class="fw-bold mb-1">{{ claim.item.title }}</h5>
+          <p class="text-muted small mb-1">Approved for: <strong>{{ claim.claimant.get_full_name|default:claim.claimant.username }}</strong></p>
+          {% if claim.item.custody %}
+          <p class="text-muted small mb-0">Location: {{ claim.item.custody.storage_location }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card border-0 shadow p-4" style="border-radius:20px;">
+        <h5 class="fw-bold mb-1"><i class="bi bi-person-check me-2 text-primary"></i>Collector Details</h5>
+        <p class="text-muted small mb-4">Verify the collector's identity with a physical ID before handing over.</p>
+
+        {% if not token_used %}
+  <div class="card border-0 bg-light p-4 mb-4 text-center" style="border-radius:16px;">
+    <h6 class="fw-bold mb-1"><i class="bi bi-qr-code me-2"></i>Claim QR Code</h6>
+    <p class="text-muted small mb-3">Scan the claimant's QR code from their email, or enter the token manually.</p>
+    <div class="d-flex justify-content-center mb-3">
+      {{ qr_svg|safe }}
+    </div>
+    <div class="input-group input-group-sm" style="max-width:400px; margin:0 auto;">
+      <span class="input-group-text"><i class="bi bi-upc-scan"></i></span>
+      <input type="text" name="qr_token" class="form-control font-monospace"
+             placeholder="Paste QR token here to verify..." value="">
+      <span class="badge bg-secondary align-self-center ms-2 p-2">Optional</span>
+    </div>
+    <small class="text-muted d-block mt-2">Leave blank to process without QR verification.</small>
+  </div>
+  {% else %}
+  <div class="alert alert-warning mb-4"><i class="bi bi-exclamation-triangle me-2"></i>QR token already used — this handover was previously recorded.</div>
+  {% endif %}
+
+  <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors }}</div>{% endif %}
+          </div>
+          {% endfor %}
+
+          <div class="alert alert-warning small mt-3">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Important:</strong> Physically verify the collector's ID matches the information entered above before handing over the item.
+          </div>
+
+          <div class="d-grid gap-2 mt-4">
+            <button type="submit" class="btn btn-success btn-lg">
+              <i class="bi bi-box-arrow-right me-2"></i>Confirm Handover & Close Case
+            </button>
+            <a href="{% url 'security:claim_detail' claim.pk %}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

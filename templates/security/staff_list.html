@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}Security Staff Management{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <h1><i class="bi bi-people-fill me-2"></i>Security Staff Management</h1>
+    <p>Promote registered users to security staff and manage their access.</p>
+  </div>
+</div>
+
+<div class="container pb-5">
+  <div class="row g-4">
+
+    <!-- Promote a user -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm" style="border-radius:16px;">
+        <div class="card-header bg-white border-0 pt-3 px-4">
+          <h5 class="fw-bold mb-0"><i class="bi bi-person-plus text-success me-2"></i>Promote a User</h5>
+          <p class="text-muted small mb-0 mt-1">The user must already have a registered account.</p>
+        </div>
+        <div class="card-body px-4 pb-4">
+          <form method="post" novalidate>
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger small">{{ form.non_field_errors }}</div>
+            {% endif %}
+            {% for field in form %}
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}<div class="form-text small">{{ field.help_text }}</div>{% endif %}
+              {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors }}</div>{% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-success w-100">
+              <i class="bi bi-shield-check me-2"></i>Grant Security Access
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card border-0 bg-light mt-3 p-3" style="border-radius:12px;">
+        <h6 class="fw-bold"><i class="bi bi-info-circle me-2 text-primary"></i>How it works</h6>
+        <ol class="small text-muted mb-0 ps-3">
+          <li>The security officer registers a normal account at <code>/accounts/register/</code></li>
+          <li>You find their username in the dropdown above</li>
+          <li>Assign a badge number and click <strong>Grant Security Access</strong></li>
+          <li>They can now log in and access the Security Dashboard</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Current staff list -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm" style="border-radius:16px;">
+        <div class="card-header bg-white border-0 pt-3 px-4">
+          <h5 class="fw-bold mb-0">
+            <i class="bi bi-shield-fill-check text-primary me-2"></i>Current Security Staff
+            <span class="badge bg-primary rounded-pill ms-2">{{ profiles|length }}</span>
+          </h5>
+        </div>
+        <div class="card-body px-4 pb-4">
+          {% if profiles %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Name</th>
+                  <th>Username</th>
+                  <th>Badge #</th>
+                  <th>Office</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for profile in profiles %}
+                <tr class="{% if not profile.is_active %}table-secondary text-muted{% endif %}">
+                  <td class="fw-semibold">{{ profile.user.get_full_name|default:profile.user.username }}</td>
+                  <td><code>{{ profile.user.username }}</code></td>
+                  <td><span class="badge bg-dark">{{ profile.badge_number }}</span></td>
+                  <td class="small text-muted">{{ profile.office_location }}</td>
+                  <td>
+                    {% if profile.is_active %}
+                    <span class="badge bg-success">Active</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Inactive</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if profile.is_active %}
+                    <form method="post" action="{% url 'security:deactivate_staff' profile.pk %}" class="d-inline"
+                          onsubmit="return confirm('Deactivate {{ profile.user.username }}?')">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-person-x"></i> Deactivate
+                      </button>
+                    </form>
+                    {% else %}
+                    <form method="post" action="{% url 'security:reactivate_staff' profile.pk %}" class="d-inline">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-person-check"></i> Reactivate
+                      </button>
+                    </form>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center py-4 text-muted">
+            <i class="bi bi-shield-slash fs-2 d-block mb-2"></i>
+            No security staff yet. Promote a user using the form on the left.
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

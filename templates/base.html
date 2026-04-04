@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Campus Lost & Found{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0F4C81;
+            --primary-light: #1a6eb5;
+            --accent: #FF6B35;
+            --accent-light: #ff8559;
+            --lost: #DC3545;
+            --found: #198754;
+            --surface: #F8F9FA;
+            --card-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            --radius: 12px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #F0F4F8;
+            color: #1a1a2e;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4, h5, .brand-text {
+            font-family: 'Syne', sans-serif;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: var(--primary) !important;
+            box-shadow: 0 2px 16px rgba(15,76,129,0.3);
+            padding: 0.75rem 0;
+        }
+        .navbar-brand {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: white !important;
+            letter-spacing: -0.5px;
+        }
+        .navbar-brand span { color: var(--accent); }
+        .nav-link {
+            color: rgba(255,255,255,0.85) !important;
+            font-weight: 500;
+            padding: 0.5rem 0.8rem !important;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .nav-link:hover { color: white !important; background: rgba(255,255,255,0.12); }
+        .nav-link.active { color: white !important; background: rgba(255,255,255,0.15); }
+        .btn-nav-cta {
+            background: var(--accent);
+            color: white !important;
+            border-radius: 8px;
+            padding: 0.4rem 1rem !important;
+            font-weight: 600;
+        }
+        .btn-nav-cta:hover { background: var(--accent-light); }
+
+        /* Cards */
+        .item-card {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--card-shadow);
+            transition: transform 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+            border: 1px solid #e8ecf0;
+        }
+        .item-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+        .item-card-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+        .item-card-placeholder {
+            width: 100%;
+            height: 180px;
+            background: linear-gradient(135deg, #e8ecf0 0%, #d0d8e4 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: #9aa5b4;
+        }
+
+        /* Badges */
+        .badge-lost { background: #FEE2E2; color: #991B1B; font-weight: 600; }
+        .badge-found { background: #D1FAE5; color: #065F46; font-weight: 600; }
+        .badge-active { background: #DBEAFE; color: #1D4ED8; }
+        .badge-claimed { background: #FEF3C7; color: #92400E; }
+        .badge-resolved { background: #D1FAE5; color: #065F46; }
+        .badge-electronics { background: #EDE9FE; color: #5B21B6; }
+        .badge-documents { background: #FEF9C3; color: #854D0E; }
+        .badge-clothing { background: #FCE7F3; color: #9D174D; }
+        .badge-others { background: #F3F4F6; color: #374151; }
+
+        /* Buttons */
+        .btn-primary {
+            background: var(--primary);
+            border-color: var(--primary);
+            font-weight: 500;
+        }
+        .btn-primary:hover { background: var(--primary-light); border-color: var(--primary-light); }
+        .btn-danger-soft {
+            background: #FEE2E2;
+            color: #991B1B;
+            border: none;
+        }
+        .btn-danger-soft:hover { background: #FECACA; color: #7F1D1D; }
+        .btn-success-soft {
+            background: #D1FAE5;
+            color: #065F46;
+            border: none;
+        }
+        .btn-success-soft:hover { background: #A7F3D0; }
+
+        /* Forms */
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(15,76,129,0.15);
+        }
+
+        /* Page header */
+        .page-header {
+            background: linear-gradient(135deg, var(--primary) 0%, #1a5c9e 100%);
+            color: white;
+            padding: 2.5rem 0 2rem;
+            margin-bottom: 2rem;
+        }
+        .page-header h1 { font-weight: 800; margin-bottom: 0.25rem; }
+        .page-header p { opacity: 0.8; margin: 0; }
+
+        /* Alert messages */
+        .messages-container { position: fixed; top: 80px; right: 1rem; z-index: 1050; min-width: 280px; }
+        .alert { border-radius: 10px; border: none; box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+
+        /* Footer */
+        footer {
+            background: var(--primary);
+            color: rgba(255,255,255,0.7);
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+        footer a { color: rgba(255,255,255,0.7); text-decoration: none; }
+        footer a:hover { color: white; }
+
+        /* Misc */
+        .section-divider { border: none; height: 2px; background: linear-gradient(to right, var(--primary), transparent); margin: 1.5rem 0; }
+        .empty-state { text-align: center; padding: 3rem 1rem; color: #6b7280; }
+        .empty-state i { font-size: 4rem; opacity: 0.3; }
+
+        @media (max-width: 576px) {
+            .page-header { padding: 1.5rem 0 1rem; }
+            .page-header h1 { font-size: 1.5rem; }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg sticky-top">
+  <div class="container">
+    <a class="navbar-brand" href="{% url 'items:home' %}">
+      <i class="bi bi-search-heart-fill me-2"></i>Campus <span>L&F</span>
+    </a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span style="color:white;font-size:1.3rem"><i class="bi bi-list"></i></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav me-auto ms-3">
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'items:home' %}">
+            <i class="bi bi-house me-1"></i>Home
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'list' %}active{% endif %}" href="{% url 'items:list' %}">
+            <i class="bi bi-grid me-1"></i>Browse Items
+          </a>
+        </li>
+        {% if user.is_authenticated %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'items:create' %}?type=lost">
+            <i class="bi bi-exclamation-circle me-1"></i>Report Lost
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'items:create' %}?type=found">
+            <i class="bi bi-check-circle me-1"></i>Report Found
+          </a>
+        </li>
+        {% load security_tags %}
+        {% if user|is_security_user %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'security:dashboard' %}" style="color:#FFD700 !important;">
+            <i class="bi bi-shield-fill-check me-1"></i>Security
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'security:analytics' %}" style="color:#FFD700 !important;">
+            <i class="bi bi-bar-chart-line me-1"></i>Analytics
+          </a>
+        </li>
+        {% if user.is_superuser %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'security:staff_list' %}" style="color:#FFD700 !important;">
+            <i class="bi bi-people-fill me-1"></i>Staff
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'accounts:email_log' %}" style="color:#FFD700 !important;">
+            <i class="bi bi-envelope-open me-1"></i>Email Log
+          </a>
+        </li>
+        {% endif %}
+        {% endif %}
+        {% endif %}
+      </ul>
+      <ul class="navbar-nav ms-auto">
+        {% if user.is_authenticated %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+            <i class="bi bi-person-circle me-1"></i>{{ user.get_short_name|default:user.username }}
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{% url 'items:my_items' %}"><i class="bi bi-collection me-2"></i>My Items</a></li>
+            <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="bi bi-gear me-2"></i>Profile</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+                <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
+              </form>
+            </li>
+          </ul>
+        </li>
+        {% else %}
+        <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
+        <li class="nav-item ms-2"><a class="nav-link btn-nav-cta" href="{% url 'accounts:register' %}">Register</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Flash messages -->
+{% if messages %}
+<div class="messages-container">
+  {% for message in messages %}
+  <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% block content %}{% endblock %}
+
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <h6 class="text-white fw-bold mb-2"><i class="bi bi-search-heart-fill me-2"></i>Campus Lost & Found</h6>
+        <p class="small mb-0">A centralized system to help campus community members report, search, and recover lost items.</p>
+      </div>
+      <div class="col-md-4 mb-3">
+        <h6 class="text-white fw-bold mb-2">Quick Links</h6>
+        <ul class="list-unstyled small">
+          <li><a href="{% url 'items:list' %}">Browse All Items</a></li>
+          <li><a href="{% url 'items:list' %}?item_type=lost">Lost Items</a></li>
+          <li><a href="{% url 'items:list' %}?item_type=found">Found Items</a></li>
+        </ul>
+      </div>
+      <div class="col-md-4 mb-3">
+        <h6 class="text-white fw-bold mb-2">Categories</h6>
+        <ul class="list-unstyled small">
+          <li><a href="{% url 'items:list' %}?category=electronics">Electronics</a></li>
+          <li><a href="{% url 'items:list' %}?category=documents">Documents</a></li>
+          <li><a href="{% url 'items:list' %}?category=clothing">Clothing</a></li>
+          <li><a href="{% url 'items:list' %}?category=others">Others</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr style="border-color:rgba(255,255,255,0.2)">
+    <p class="text-center small mb-0">&copy; {% now "Y" %} Campus Lost & Found. All rights reserved.</p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Auto-dismiss alerts after 5s
+  setTimeout(() => {
+    document.querySelectorAll('.messages-container .alert').forEach(el => {
+      new bootstrap.Alert(el).close();
+    });
+  }, 5000);
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

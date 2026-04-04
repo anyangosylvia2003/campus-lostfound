@@ -1,0 +1,40 @@
+{% load items_tags %}
+<a href="{{ item.get_absolute_url }}" class="text-decoration-none">
+  <div class="item-card h-100">
+    {% if item.image %}
+    <img src="{{ item.image.url }}" alt="{{ item.title }}" class="item-card-img">
+    {% else %}
+    <div class="item-card-placeholder">
+      {% if item.category == 'electronics' %}<i class="bi bi-laptop"></i>
+      {% elif item.category == 'documents' %}<i class="bi bi-file-text"></i>
+      {% elif item.category == 'clothing' %}<i class="bi bi-bag"></i>
+      {% elif item.category == 'keys' %}<i class="bi bi-key"></i>
+      {% elif item.category == 'ids' %}<i class="bi bi-person-badge"></i>
+      {% elif item.category == 'wallets' %}<i class="bi bi-wallet2"></i>
+      {% elif item.category == 'bags' %}<i class="bi bi-bag-fill"></i>
+      {% else %}<i class="bi bi-box"></i>{% endif %}
+    </div>
+    {% endif %}
+    <div class="p-3">
+      <div class="d-flex gap-2 mb-2 flex-wrap">
+        <span class="badge rounded-pill {% if item.item_type == 'lost' %}badge-lost{% else %}badge-found{% endif %}">
+          <i class="bi {% if item.item_type == 'lost' %}bi-exclamation-circle{% else %}bi-check-circle{% endif %} me-1"></i>{{ item.get_item_type_display }}
+        </span>
+        <span class="badge rounded-pill badge-{{ item.category }}">{{ item.get_category_display }}</span>
+        {% if item.status == 'matched' %}
+        <span class="badge rounded-pill bg-info text-dark"><i class="bi bi-lightning-fill me-1"></i>Matched</span>
+        {% endif %}
+      </div>
+      <h6 class="fw-bold mb-1 text-dark text-truncate">{{ item.title }}</h6>
+      {% if item.brand or item.color %}
+      <p class="text-muted small mb-1">
+        {% if item.brand %}<i class="bi bi-tag me-1"></i>{{ item.brand }}{% endif %}
+        {% if item.brand and item.color %} · {% endif %}
+        {% if item.color %}{{ item.color }}{% endif %}
+      </p>
+      {% endif %}
+      <p class="text-muted small mb-1"><i class="bi bi-geo-alt me-1"></i>{{ item.location|truncatechars:30 }}</p>
+      <p class="text-muted small mb-0"><i class="bi bi-calendar3 me-1"></i>{{ item.date|date:"M j, Y" }}</p>
+    </div>
+  </div>
+</a>

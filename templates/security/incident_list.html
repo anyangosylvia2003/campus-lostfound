@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Incident Log{% endblock %}
+{% block content %}
+<div class="page-header"><div class="container">
+  <div class="d-flex justify-content-between align-items-center">
+    <div><h1><i class="bi bi-exclamation-triangle me-2"></i>Incident Log</h1></div>
+    <a href="{% url 'security:log_incident' %}" class="btn btn-danger"><i class="bi bi-flag me-2"></i>Log Incident</a>
+  </div>
+</div></div>
+<div class="container pb-5">
+  <div class="card border-0 shadow-sm" style="border-radius:16px;">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light"><tr><th>Type</th><th>Severity</th><th>Description</th><th>Subject</th><th>Item</th><th>Date</th><th>Resolved</th></tr></thead>
+        <tbody>
+          {% for incident in page_obj %}
+          <tr>
+            <td><span class="badge bg-secondary">{{ incident.get_incident_type_display }}</span></td>
+            <td><span class="badge {% if incident.severity == 'high' %}bg-danger{% elif incident.severity == 'medium' %}bg-warning text-dark{% else %}bg-info{% endif %}">{{ incident.get_severity_display }}</span></td>
+            <td class="small">{{ incident.description|truncatechars:70 }}</td>
+            <td><small>{{ incident.subject_user.username|default:"—" }}</small></td>
+            <td><small>{% if incident.related_item %}<a href="{% url 'items:detail' incident.related_item.pk %}">{{ incident.related_item.title|truncatechars:25 }}</a>{% else %}—{% endif %}</small></td>
+            <td><small>{{ incident.created_at|date:"M j, Y" }}</small></td>
+            <td>{% if incident.action_taken %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}<i class="bi bi-x-circle text-danger"></i>{% endif %}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="text-center text-muted py-4">No incidents logged.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

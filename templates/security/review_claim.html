@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% block title %}Review Claim{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <h1><i class="bi bi-clipboard-check me-2"></i>Review Claim</h1>
+    <p>Verify proof of ownership and approve or reject</p>
+  </div>
+</div>
+<div class="container pb-5">
+  <div class="row g-4">
+
+    <!-- Left: claim details -->
+    <div class="col-lg-5">
+
+      <div class="card border-0 shadow-sm mb-3" style="border-radius:14px;">
+        <div class="card-body p-4">
+          <h6 class="fw-bold text-muted text-uppercase mb-3" style="letter-spacing:1px; font-size:.75rem;">Item</h6>
+          <h5 class="fw-bold">{{ claim.item.title }}</h5>
+          <p class="text-muted small">{{ claim.item.description|truncatechars:120 }}</p>
+          <p class="mb-1 small"><i class="bi bi-geo-alt me-1 text-primary"></i>{{ claim.item.location }}</p>
+          <p class="mb-0 small"><i class="bi bi-calendar3 me-1 text-primary"></i>{{ claim.item.date|date:"F j, Y" }}</p>
+        </div>
+      </div>
+
+      <!-- SECRET IDENTIFIERS — Security eyes only -->
+      {% if claim.item.custody %}
+      <div class="card mb-3" style="border-radius:14px; border:2px solid #FCA5A5; background:#FFF5F5;">
+        <div class="card-body p-4">
+          <h6 class="fw-bold text-danger mb-1">
+            <i class="bi bi-shield-fill-exclamation me-2"></i>Secret Identifiers
+          </h6>
+          <p class="text-muted small mb-2">What security recorded — compare against claimant's proof below</p>
+          <div style="background:white; border-radius:8px; padding:.75rem; border:1px solid #FCA5A5;">
+            {% if claim.item.custody.secret_identifiers %}
+            <p class="mb-0 fw-medium" style="white-space:pre-wrap;">{{ claim.item.custody.secret_identifiers }}</p>
+            {% else %}
+            <p class="text-muted fst-italic mb-0">No secret identifiers were recorded for this item.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Claimant info -->
+      <div class="card border-0 shadow-sm" style="border-radius:14px;">
+        <div class="card-body p-4">
+          <h6 class="fw-bold text-muted text-uppercase mb-3" style="letter-spacing:1px; font-size:.75rem;">Claimant</h6>
+          <p class="fw-bold mb-1">{{ claim.claimant.get_full_name|default:claim.claimant.username }}</p>
+          <p class="text-muted small mb-1">
+            {{ claim.claimant.email|default:"No email on file" }}
+          </p>
+          <p class="text-muted small mb-0">Submitted: {{ claim.submitted_at|date:"M j, Y — g:i A" }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: claimant's proof + decision form -->
+    <div class="col-lg-7">
+
+      <div class="card border-0 shadow-sm mb-4" style="border-radius:14px; border:2px solid #DBEAFE !important; background:#EFF6FF;">
+        <div class="card-body p-4">
+          <h6 class="fw-bold text-primary mb-3">
+            <i class="bi bi-person-check me-2"></i>Claimant's Proof of Ownership
+          </h6>
+          <div class="mb-3">
+            <label class="form-label fw-semibold small text-uppercase" style="letter-spacing:.5px; color:#6b7280;">Detailed Description</label>
+            <div class="p-3 bg-white rounded-3" style="border:1px solid #BFDBFE;">
+              {{ claim.proof_description }}
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold small text-uppercase" style="letter-spacing:.5px; color:#6b7280;">Unique Identifiers / Proof</label>
+            <div class="p-3 bg-white rounded-3" style="border:1px solid #BFDBFE;">
+              {{ claim.proof_identifiers }}
+            </div>
+          </div>
+          {% if claim.additional_notes %}
+          <div>
+            <label class="form-label fw-semibold small text-uppercase" style="letter-spacing:.5px; color:#6b7280;">Additional Notes</label>
+            <div class="p-3 bg-white rounded-3" style="border:1px solid #BFDBFE;">
+              {{ claim.additional_notes }}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Decision form -->
+      <div class="card border-0 shadow p-4" style="border-radius:20px;">
+        <h5 class="fw-bold mb-1"><i class="bi bi-gavel me-2 text-primary"></i>Your Decision</h5>
+        <p class="text-muted small mb-4">Compare the claimant's proof against the secret identifiers above before deciding.</p>
+
+        <form method="post">
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+          {% endif %}
+
+          <div class="mb-4">
+            <div class="row g-3">
+              <div class="col-6">
+                <div class="form-check p-3 rounded-3 h-100" style="background:#D1FAE5; border:2px solid #6EE7B7; cursor:pointer;" onclick="document.getElementById('id_decision_0').click()">
+                  <input class="form-check-input" type="radio" name="decision" id="id_decision_0" value="approve">
+                  <label class="form-check-label fw-bold text-success d-block" for="id_decision_0">
+                    <i class="bi bi-check-circle-fill d-block fs-3 mb-1"></i>
+                    Approve Claim
+                  </label>
+                  <small class="text-muted">Proof matches — proceed to handover</small>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-check p-3 rounded-3 h-100" style="background:#FEE2E2; border:2px solid #FCA5A5; cursor:pointer;" onclick="document.getElementById('id_decision_1').click()">
+                  <input class="form-check-input" type="radio" name="decision" id="id_decision_1" value="reject">
+                  <label class="form-check-label fw-bold text-danger d-block" for="id_decision_1">
+                    <i class="bi bi-x-circle-fill d-block fs-3 mb-1"></i>
+                    Reject Claim
+                  </label>
+                  <small class="text-muted">Proof insufficient or suspicious</small>
+                </div>
+              </div>
+            </div>
+            {% if form.decision.errors %}<div class="text-danger small mt-1">{{ form.decision.errors }}</div>{% endif %}
+          </div>
+
+          <div class="mb-3" id="rejection-reason-section" style="display:none;">
+            <label class="form-label fw-semibold">Rejection Reason <span class="text-danger">*</span></label>
+            {{ form.rejection_reason }}
+            <small class="text-muted">This will be sent to the claimant.</small>
+            {% if form.rejection_reason.errors %}<div class="text-danger small mt-1">{{ form.rejection_reason.errors }}</div>{% endif %}
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Internal Security Notes <span class="text-muted fw-normal">(optional)</span></label>
+            {{ form.security_notes }}
+            <small class="text-muted">Not shown to claimant.</small>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-lg flex-grow-1">
+              <i class="bi bi-gavel me-2"></i>Submit Decision
+            </button>
+            <a href="{% url 'security:dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+
+      <div class="mt-3">
+        <a href="{% url 'security:log_incident_claim' claim.pk %}" class="btn btn-outline-danger btn-sm">
+          <i class="bi bi-flag me-1"></i>Log Incident for This Claim
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.querySelectorAll('input[name="decision"]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+      document.getElementById('rejection-reason-section').style.display =
+        this.value === 'reject' ? 'block' : 'none';
+    });
+  });
+  // Auto-show rejection reason if form was re-submitted with 'reject' selected
+  const checked = document.querySelector('input[name="decision"]:checked');
+  if (checked && checked.value === 'reject') {
+    document.getElementById('rejection-reason-section').style.display = 'block';
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Transfer Custody — {{ custody.item.title }}{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <h4 class="fw-bold mb-1"><i class="bi bi-arrow-left-right me-2"></i>Transfer Item Custody</h4>
+      <p class="text-muted mb-4">Log a location change for <strong>{{ custody.item.title }}</strong>.<br>
+        Currently at: <code>{{ custody.storage_location }}</code></p>
+      <div class="card border-0 shadow p-4" style="border-radius:16px;">
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+            {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+          </div>
+          {% endfor %}
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Log Transfer</button>
+            <a href="{% url 'security:custody_detail' custody.pk %}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

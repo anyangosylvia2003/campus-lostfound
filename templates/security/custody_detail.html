@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block title %}Custody Detail
+  <!-- Chain of Custody Transfer Log -->
+  <div class="card border-0 shadow-sm mt-4" style="border-radius:16px;">
+    <div class="card-header bg-white border-0 pt-3 px-4 d-flex justify-content-between align-items-center">
+      <h5 class="fw-bold mb-0"><i class="bi bi-arrow-left-right text-primary me-2"></i>Chain of Custody Log</h5>
+      {% if custody.custody_status == 'in_custody' %}
+      <a href="{% url 'security:transfer_custody' custody.pk %}" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-plus me-1"></i>Log Transfer
+      </a>
+      {% endif %}
+    </div>
+    <div class="card-body px-4 pb-4">
+      {% if transfers %}
+      <table class="table table-sm align-middle">
+        <thead class="table-light">
+          <tr><th>Date/Time</th><th>From</th><th>To</th><th>By</th><th>Reason</th></tr>
+        </thead>
+        <tbody>
+          {% for t in transfers %}
+          <tr>
+            <td class="small text-muted">{{ t.transferred_at|date:"d M Y H:i" }}</td>
+            <td class="small">{{ t.from_location }}</td>
+            <td class="small fw-semibold">{{ t.to_location }}</td>
+            <td class="small">{{ t.transferred_by.get_full_name|default:t.transferred_by.username }}</td>
+            <td class="small text-muted">{{ t.reason|default:"—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="text-muted small mb-0">No transfers recorded. Item has remained at the original storage location.</p>
+      {% endif %}
+    </div>
+  </div>
+
+{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <h1><i class="bi bi-archive me-2"></i>Custody Record</h1>
+    <p>{{ custody.item.title }}</p>
+  </div>
+</div>
+<div class="container pb-5">
+  <div class="row g-4">
+    <div class="col-lg-5">
+
+      <div class="card border-0 shadow-sm mb-3" style="border-radius:14px;">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3">Item Details</h5>
+          <div class="d-flex gap-2 mb-3">
+            <span class="badge badge-{{ custody.item.item_type }} rounded-pill">{{ custody.item.get_item_type_display }}</span>
+            <span class="badge badge-{{ custody.item.category }} rounded-pill">{{ custody.item.get_category_display }}</span>
+            <span class="badge badge-{{ custody.item.status }} rounded-pill">{{ custody.item.get_status_display }}</span>
+          </div>
+          <h4 class="fw-bold">{{ custody.item.title }}</h4>
+          <p class="text-muted">{{ custody.item.description }}</p>
+          <p class="mb-1"><i class="bi bi-geo-alt me-2 text-primary"></i>{{ custody.item.location }}</p>
+          <p class="mb-0"><i class="bi bi-calendar3 me-2 text-primary"></i>{{ custody.item.date|date:"F j, Y" }}</p>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-3" style="border-radius:14px; border:2px solid #FEE2E2 !important; background:#FFF5F5;">
+        <div class="card-body p-4">
+          <h6 class="fw-bold text-danger mb-2">
+            <i class="bi bi-shield-exclamation me-2"></i>Secret Identifiers
+            <span class="badge bg-danger ms-1 small">Security Only</span>
+          </h6>
+          <p class="text-muted small mb-2">Used to verify claimants — never shown publicly</p>
+          {% if custody.secret_identifiers %}
+          <p class="mb-0" style="white-space:pre-wrap;">{{ custody.secret_identifiers }}</p>
+          {% else %}
+          <p class="text-muted fst-italic">None recorded.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm" style="border-radius:14px;">
+        <div class="card-body p-4">
+          <h6 class="fw-bold mb-3">Custody Info</h6>
+          <p class="mb-2"><strong>Status:</strong>
+            <span class="badge {% if custody.custody_status == 'in_custody' %}bg-primary{% elif custody.custody_status == 'returned' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+              {{ custody.get_custody_status_display }}
+            </span>
+          </p>
+          <p class="mb-2"><strong>Storage:</strong> {{ custody.storage_location }}</p>
+          <p class="mb-2"><strong>Received by:</strong> {{ custody.received_by.get_full_name|default:custody.received_by.username }}</p>
+          <p class="mb-0"><strong>Received at:</strong> {{ custody.received_at|date:"M j, Y — g:i A" }}</p>
+          {% if custody.notes %}
+          <hr>
+          <p class="mb-0 small text-muted">{{ custody.notes }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm" style="border-radius:14px;">
+        <div class="card-header bg-white border-0 pt-3 px-4 d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold mb-0"><i class="bi bi-list-check me-2"></i>Claim Requests</h5>
+          <span class="badge bg-primary">{{ claims.count }}</span>
+        </div>
+        <div class="card-body px-4 pb-4">
+          {% for claim in claims %}
+          <div class="card mb-3 border" style="border-radius:12px;">
+            <div class="card-body p-3">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <strong>{{ claim.claimant.get_full_name|default:claim.claimant.username }}</strong>
+                  <small class="text-muted d-block">{{ claim.claimant.email }}</small>
+                </div>
+                <span class="badge {% if claim.status == 'pending' %}bg-warning text-dark{% elif claim.status == 'approved' %}bg-success{% else %}bg-danger{% endif %}">
+                  {{ claim.get_status_display }}
+                </span>
+              </div>
+              <p class="small text-muted mb-1"><strong>Description:</strong> {{ claim.proof_description|truncatechars:100 }}</p>
+              <p class="small text-muted mb-2"><strong>Identifiers:</strong> {{ claim.proof_identifiers|truncatechars:80 }}</p>
+              <div class="d-flex gap-2">
+                <a href="{% url 'security:claim_detail' claim.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                {% if claim.status == 'pending' %}
+                <a href="{% url 'security:review_claim' claim.pk %}" class="btn btn-sm btn-primary">Review</a>
+                <a href="{% url 'security:log_incident_claim' claim.pk %}" class="btn btn-sm btn-outline-danger">Log Incident</a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="text-center py-4 text-muted">
+            <i class="bi bi-inbox fs-2 d-block mb-2 opacity-25"></i>
+            No claims submitted yet.
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 mt-3">
+        <a href="{% url 'items:detail' custody.item.pk %}" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i>Item Page
+        </a>
+        <a href="{% url 'security:log_incident_item' custody.item.pk %}" class="btn btn-outline-danger">
+          <i class="bi bi-flag me-1"></i>Log Incident
+        </a>
+        <a href="{% url 'security:dashboard' %}" class="btn btn-outline-primary ms-auto">
+          <i class="bi bi-speedometer2 me-1"></i>Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- Chain of Custody Transfer Log -->
+  <div class="card border-0 shadow-sm mt-4" style="border-radius:16px;">
+    <div class="card-header bg-white border-0 pt-3 px-4 d-flex justify-content-between align-items-center">
+      <h5 class="fw-bold mb-0"><i class="bi bi-arrow-left-right text-primary me-2"></i>Chain of Custody Log</h5>
+      {% if custody.custody_status == 'in_custody' %}
+      <a href="{% url 'security:transfer_custody' custody.pk %}" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-plus me-1"></i>Log Transfer
+      </a>
+      {% endif %}
+    </div>
+    <div class="card-body px-4 pb-4">
+      {% if transfers %}
+      <table class="table table-sm align-middle">
+        <thead class="table-light">
+          <tr><th>Date/Time</th><th>From</th><th>To</th><th>By</th><th>Reason</th></tr>
+        </thead>
+        <tbody>
+          {% for t in transfers %}
+          <tr>
+            <td class="small text-muted">{{ t.transferred_at|date:"d M Y H:i" }}</td>
+            <td class="small">{{ t.from_location }}</td>
+            <td class="small fw-semibold">{{ t.to_location }}</td>
+            <td class="small">{{ t.transferred_by.get_full_name|default:t.transferred_by.username }}</td>
+            <td class="small text-muted">{{ t.reason|default:"—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="text-muted small mb-0">No transfers recorded. Item has remained at the original storage location.</p>
+      {% endif %}
+    </div>
+  </div>
+
+{% endblock %}

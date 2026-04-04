@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Collection QR Code — {{ claim.item.title }}{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-5 text-center">
+      <div class="card border-0 shadow p-4" style="border-radius:20px;">
+        <h4 class="fw-bold mb-1">Your Collection QR Code</h4>
+        <p class="text-muted small mb-3">Show this to the security officer when collecting your item.</p>
+
+        {% if token_used %}
+        <div class="alert alert-warning">
+          <i class="bi bi-exclamation-triangle me-2"></i>This QR code has already been used. Your item should have been collected.
+        </div>
+        {% else %}
+        <div class="mb-3">
+          {{ qr_svg|safe }}
+        </div>
+        <div class="alert alert-success small">
+          <strong>{{ claim.item.title }}</strong><br>
+          Present this screen at the Security Office with a valid ID.
+        </div>
+        <p class="text-muted" style="font-family:monospace; font-size:11px; word-break:break-all;">
+          Token: {{ claim.handover_token }}
+        </p>
+        {% endif %}
+
+        <a href="{% url 'items:detail' claim.item.pk %}" class="btn btn-outline-secondary btn-sm mt-2">
+          <i class="bi bi-arrow-left me-1"></i>Back to Item
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

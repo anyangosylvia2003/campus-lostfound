@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Claim Detail{% endblock %}
+{% block content %}
+<div class="page-header"><div class="container"><h1><i class="bi bi-list-check me-2"></i>Claim Detail</h1></div></div>
+<div class="container pb-5">
+  <div class="row justify-content-center"><div class="col-lg-8">
+    <div class="card border-0 shadow-sm mb-3" style="border-radius:14px;">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div>
+            <h5 class="fw-bold mb-1">{{ claim.item.title }}</h5>
+            <p class="text-muted small mb-0">Claim by <strong>{{ claim.claimant.get_full_name|default:claim.claimant.username }}</strong> — {{ claim.submitted_at|date:"M j, Y g:i A" }}</p>
+          </div>
+          <span class="badge px-3 py-2 {% if claim.status == 'pending' %}bg-warning text-dark{% elif claim.status == 'approved' %}bg-success{% else %}bg-danger{% endif %}">
+            {{ claim.get_status_display }}
+          </span>
+        </div>
+        <hr>
+        <h6 class="fw-bold">Proof Description</h6><p>{{ claim.proof_description }}</p>
+        <h6 class="fw-bold">Unique Identifiers</h6><p>{{ claim.proof_identifiers }}</p>
+        {% if claim.additional_notes %}<h6 class="fw-bold">Additional Notes</h6><p>{{ claim.additional_notes }}</p>{% endif %}
+        {% if claim.status == 'rejected' %}
+        <div class="alert alert-danger mt-3"><strong>Rejection Reason:</strong> {{ claim.rejection_reason }}</div>
+        {% endif %}
+        {% if claim.security_notes %}
+        <div class="alert alert-secondary mt-3"><strong>Security Notes (internal):</strong> {{ claim.security_notes }}</div>
+        {% endif %}
+        {% if handover %}
+        <hr>
+        <h6 class="fw-bold text-success"><i class="bi bi-box-arrow-right me-2"></i>Handover Record</h6>
+        <p class="mb-1">Collected by: <strong>{{ handover.collector_name }}</strong> ({{ handover.get_collector_id_type_display }}: {{ handover.collector_id_number }})</p>
+        <p class="mb-1">Handed over by: {{ handover.handed_over_by.get_full_name|default:handover.handed_over_by.username }}</p>
+        <p class="mb-0">Date: {{ handover.handed_over_at|date:"M j, Y — g:i A" }}</p>
+        <p class="mb-0 mt-1">
+          {% if handover.qr_verified %}
+          <span class="badge bg-success"><i class="bi bi-qr-code me-1"></i>QR Verified</span>
+          {% else %}
+          <span class="badge bg-secondary">Manual Handover</span>
+          {% endif %}
+        </p>
+        {% endif %}
+        <div class="d-flex flex-wrap gap-2 mt-4">
+          {% if claim.status == 'pending' %}<a href="{% url 'security:review_claim' claim.pk %}" class="btn btn-primary">Review Claim</a>{% endif %}
+          {% if claim.status == 'approved' and not handover %}
+          <a href="{% url 'security:process_handover' claim.pk %}" class="btn btn-success">
+            <i class="bi bi-check-circle me-1"></i>Process Handover
+          </a>
+          {% endif %}
+          {% if claim.status == 'approved' %}
+          <a href="{% url 'security:handover_qr' claim.handover_token %}" class="btn btn-outline-primary" target="_blank">
+            <i class="bi bi-qr-code me-1"></i>View QR Code
+          </a>
+          {% endif %}
+          <a href="{% url 'security:log_incident_claim' claim.pk %}" class="btn btn-outline-danger">Log Incident</a>
+          <a href="{% url 'security:dashboard' %}" class="btn btn-outline-secondary">Dashboard</a>
+        </div>
+      </div>
+    </div>
+  </div></div>
+</div>
+{% endblock %}

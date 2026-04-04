@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+
+{% block title %}Campus Lost & Found - Home{% endblock %}
+
+{% block extra_css %}
+<style>
+  .hero {
+    background: linear-gradient(135deg, #0F4C81 0%, #1a5c9e 60%, #0d3d6b 100%);
+    color: white;
+    padding: 4rem 0 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(255,107,53,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; line-height: 1.1; }
+  .hero-btns .btn { padding: 0.7rem 1.5rem; font-weight: 600; border-radius: 10px; }
+  .stat-box {
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.15);
+    text-align: center;
+  }
+  .stat-box .number { font-size: 2rem; font-weight: 800; font-family: 'Syne', sans-serif; }
+  .stat-box .label { font-size: 0.8rem; opacity: 0.75; text-transform: uppercase; letter-spacing: 1px; }
+  .section-title { font-weight: 800; font-size: 1.4rem; color: var(--primary); }
+  .type-strip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="hero">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-7 mb-4 mb-lg-0">
+        <p class="text-warning fw-semibold mb-2" style="font-size:0.9rem; letter-spacing:2px; text-transform:uppercase;">Campus Community</p>
+        <h1 class="mb-3">Lost something?<br>Found something?<br><span style="color:#FF6B35;">We connect you.</span></h1>
+        <p class="mb-4" style="opacity:0.85; font-size:1.05rem; max-width:520px;">
+          A centralized platform for the campus community to report, search, and recover lost items. Simple, fast, and reliable.
+        </p>
+        <div class="hero-btns d-flex flex-wrap gap-3">
+          {% if user.is_authenticated %}
+          <a href="{% url 'items:create' %}?type=lost" class="btn btn-danger">
+            <i class="bi bi-exclamation-circle me-2"></i>Report Lost Item
+          </a>
+          <a href="{% url 'items:create' %}?type=found" class="btn btn-success">
+            <i class="bi bi-check-circle me-2"></i>Report Found Item
+          </a>
+          {% else %}
+          <a href="{% url 'accounts:register' %}" class="btn" style="background:var(--accent);color:white;">
+            <i class="bi bi-person-plus me-2"></i>Get Started
+          </a>
+          <a href="{% url 'items:list' %}" class="btn btn-outline-light">
+            <i class="bi bi-search me-2"></i>Browse Items
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="stat-box">
+              <div class="number text-warning">{{ stats.lost }}</div>
+              <div class="label">Lost Items</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-box">
+              <div class="number" style="color:#6EE7B7;">{{ stats.found }}</div>
+              <div class="label">Found Items</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-box">
+              <div class="number text-white">{{ stats.total }}</div>
+              <div class="label">Total Reports</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-box">
+              <div class="number" style="color:#93C5FD;">{{ stats.resolved }}</div>
+              <div class="label">Recovered</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Quick search bar -->
+<div class="container mt-4">
+  <div class="card border-0 shadow" style="border-radius:16px; background:white;">
+    <div class="card-body p-3">
+      <form action="{% url 'items:list' %}" method="get" class="row g-2 align-items-end">
+        <div class="col-md-5">
+          <input type="text" name="q" class="form-control form-control-lg" placeholder="Search for an item..." value="{{ request.GET.q }}">
+        </div>
+        <div class="col-md-3">
+          <select name="item_type" class="form-select form-select-lg">
+            <option value="">All Types</option>
+            <option value="lost">Lost</option>
+            <option value="found">Found</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <select name="category" class="form-select form-select-lg">
+            <option value="">All Categories</option>
+            <option value="electronics">Electronics</option>
+            <option value="documents">Documents</option>
+            <option value="clothing">Clothing</option>
+            <option value="others">Others</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-primary btn-lg w-100">
+            <i class="bi bi-search me-1"></i>Search
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="container my-5">
+
+  <!-- Recent Lost Items -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="section-title"><i class="bi bi-exclamation-circle text-danger me-2"></i>Recently Lost</h2>
+    <a href="{% url 'items:list' %}?item_type=lost" class="btn btn-sm btn-outline-danger">View all →</a>
+  </div>
+
+  {% if recent_lost %}
+  <div class="row g-3 mb-5">
+    {% for item in recent_lost %}
+    <div class="col-sm-6 col-md-4 col-lg-2">
+      {% include 'items/_item_card.html' %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state mb-5"><i class="bi bi-inbox"></i><p class="mt-2">No active lost items</p></div>
+  {% endif %}
+
+  <!-- Recent Found Items -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="section-title"><i class="bi bi-check-circle text-success me-2"></i>Recently Found</h2>
+    <a href="{% url 'items:list' %}?item_type=found" class="btn btn-sm btn-outline-success">View all →</a>
+  </div>
+
+  {% if recent_found %}
+  <div class="row g-3">
+    {% for item in recent_found %}
+    <div class="col-sm-6 col-md-4 col-lg-2">
+      {% include 'items/_item_card.html' %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="bi bi-inbox"></i><p class="mt-2">No active found items</p></div>
+  {% endif %}
+
+  <!-- How it works -->
+  <div class="mt-5 pt-3">
+    <h2 class="section-title text-center mb-4">How It Works</h2>
+    <div class="row g-4">
+      {% for step in '123'|make_list %}
+      <div class="col-md-4">
+        <div class="text-center p-3">
+          {% if forloop.counter == 1 %}
+          <div style="width:64px;height:64px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;"><i class="bi bi-pencil-square text-white fs-4"></i></div>
+          <h5 class="fw-bold">Report</h5>
+          <p class="text-muted">Log a lost or found item with details and location. Takes less than 2 minutes.</p>
+          {% elif forloop.counter == 2 %}
+          <div style="width:64px;height:64px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;"><i class="bi bi-search text-white fs-4"></i></div>
+          <h5 class="fw-bold">Match</h5>
+          <p class="text-muted">Our system automatically finds possible matches based on category and keywords.</p>
+          {% else %}
+          <div style="width:64px;height:64px;background:#198754;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;"><i class="bi bi-handshake text-white fs-4"></i></div>
+          <h5 class="fw-bold">Recover</h5>
+          <p class="text-muted">Contact the item owner directly via email and arrange to get your item back.</p>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

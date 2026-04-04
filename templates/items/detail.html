@@ -1,0 +1,361 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ item.title }} - Campus Lost & Found{% endblock %}
+
+{% block extra_css %}
+<style>
+  .detail-img { width:100%; max-height:420px; object-fit:cover; border-radius:16px; }
+  .detail-placeholder {
+    width:100%; height:280px;
+    background: linear-gradient(135deg,#e8ecf0,#d0d8e4);
+    border-radius:16px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:6rem; color:#9aa5b4;
+  }
+  .meta-row { display:flex; align-items:flex-start; gap:.75rem; padding:.75rem 0; border-bottom:1px solid #f0f2f5; }
+  .meta-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1rem; }
+  .match-card { border:2px solid #e8ecf0; border-radius:12px; padding:1rem; transition:all .2s; }
+  .match-card:hover { border-color:var(--primary); transform:translateY(-2px); box-shadow:0 4px 16px rgba(0,0,0,.1); }
+  .contact-box { background:linear-gradient(135deg,#f0f7ff,#e8f0fe); border-radius:16px; padding:1.5rem; border:1px solid #c7d9f5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'items:home' %}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'items:list' %}">Browse</a></li>
+      <li class="breadcrumb-item active text-truncate" style="max-width:200px;">{{ item.title }}</li>
+    </ol>
+  </nav>
+
+  <div class="row g-4">
+    <!-- Left: image + actions -->
+    <div class="col-lg-5">
+      {% if item.image %}
+      <img src="{{ item.image.url }}" alt="{{ item.title }}" class="detail-img mb-3">
+      {% else %}
+      <div class="detail-placeholder mb-3">
+        {% if item.category == 'electronics' %}<i class="bi bi-phone"></i>
+        {% elif item.category == 'documents' %}<i class="bi bi-file-text"></i>
+        {% elif item.category == 'clothing' %}<i class="bi bi-bag"></i>
+        {% else %}<i class="bi bi-box"></i>{% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Security Custody Banner -->
+      {% if item.custody %}
+      <div class="mb-3 p-3 rounded-3" style="background:#EFF6FF; border:1px solid #BFDBFE;">
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <i class="bi bi-shield-fill-check text-primary fs-5"></i>
+          <span class="fw-bold text-primary">Held by Security Office</span>
+        </div>
+        <p class="small text-muted mb-1">
+          <i class="bi bi-geo-alt me-1"></i>{{ item.custody.storage_location }}
+        </p>
+        <p class="small text-muted mb-0">
+          <i class="bi bi-calendar3 me-1"></i>Received {{ item.custody.received_at|date:"M j, Y" }}
+        </p>
+      </div>
+      {% endif %}
+
+      <!-- Contact Box -->
+      <div class="contact-box mb-3">
+        <h6 class="fw-bold mb-1"><i class="bi bi-person-circle me-2 text-primary"></i>Reported by</h6>
+        <p class="mb-1 fw-semibold">{{ item.owner.get_full_name|default:item.owner.username }}</p>
+        {% if user.is_authenticated %}
+          {% if user != item.owner %}
+          <button type="button" class="btn btn-primary w-100 mt-2" data-bs-toggle="modal" data-bs-target="#contactModal">
+            <i class="bi bi-envelope-fill me-2"></i>Send Message to Owner
+          </button>
+          <p class="text-muted small mt-2 mb-0 text-center">
+            <i class="bi bi-shield-check me-1"></i>Message sent directly — no email app opens
+          </p>
+          {% else %}
+          <div class="alert alert-info small mt-2 mb-0 py-2">
+            <i class="bi bi-info-circle me-1"></i>This is your item.
+          </div>
+          {% endif %}
+        {% else %}
+        <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-outline-primary w-100 mt-2">
+          <i class="bi bi-lock me-2"></i>Login to Contact Owner
+        </a>
+        {% endif %}
+      </div>
+
+      <!-- Claim This Item button (found items in custody only) -->
+      {% if item.item_type == 'found' and item.custody and item.custody.custody_status == 'in_custody' and user.is_authenticated and user != item.owner %}
+        {% with existing_claim=item.claim_requests.all %}
+        {% if not existing_claim|length or existing_claim.0.claimant != user %}
+        <div class="mb-3">
+          <a href="{% url 'security:submit_claim' item.pk %}" class="btn btn-success w-100">
+            <i class="bi bi-hand-index me-2"></i>This Is Mine — Submit Claim
+          </a>
+          <p class="text-muted small mt-2 mb-0 text-center">
+            <i class="bi bi-shield-lock me-1"></i>Security will verify your proof of ownership
+          </p>
+        </div>
+        {% endif %}
+        {% endwith %}
+      {% endif %}
+
+      <!-- Security staff actions -->
+      {% if is_security_user %}
+      <div class="card border-0 mb-3" style="background:#FFF7ED; border:1px solid #FED7AA !important; border-radius:12px;">
+        <div class="card-body p-3">
+          <h6 class="fw-bold mb-2" style="color:#92400E;">
+            <i class="bi bi-shield-fill me-2"></i>Security Actions
+          </h6>
+          <div class="d-grid gap-2">
+            {% if not item.custody %}
+            <a href="{% url 'security:receive_item' item.pk %}" class="btn btn-sm btn-warning">
+              <i class="bi bi-archive me-1"></i>Log into Custody
+            </a>
+            {% else %}
+            <a href="{% url 'security:custody_detail' item.custody.pk %}" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-archive me-1"></i>View Custody Record
+            </a>
+            {% endif %}
+            <form method="post" action="{% url 'security:update_item_status' item.pk %}" class="d-flex gap-2">
+              {% csrf_token %}
+              <select name="status" class="form-select form-select-sm">
+                <option value="active" {% if item.status == 'active' %}selected{% endif %}>Active</option>
+                <option value="claimed" {% if item.status == 'claimed' %}selected{% endif %}>Claimed</option>
+                <option value="resolved" {% if item.status == 'resolved' %}selected{% endif %}>Resolved</option>
+              </select>
+              <button type="submit" class="btn btn-sm btn-secondary flex-shrink-0">Update</button>
+            </form>
+            <a href="{% url 'security:log_incident_item' item.pk %}" class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-flag me-1"></i>Log Incident
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Owner actions -->
+      {% if user == item.owner %}
+      <div class="d-grid gap-2">
+        {% if item.status == 'active' or item.status == 'claimed' %}
+        <form method="post" action="{% url 'items:resolve' item.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-success-soft w-100"
+            onclick="return confirm('Mark this item as resolved?')">
+            <i class="bi bi-check-circle me-2"></i>Mark as Resolved
+          </button>
+        </form>
+        {% endif %}
+        <a href="{% url 'items:edit' item.pk %}" class="btn btn-outline-secondary">
+          <i class="bi bi-pencil me-2"></i>Edit Item
+        </a>
+        <a href="{% url 'items:delete' item.pk %}" class="btn btn-danger-soft">
+          <i class="bi bi-trash me-2"></i>Delete Item
+        </a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Right: details -->
+    <div class="col-lg-7">
+      <div class="d-flex flex-wrap gap-2 mb-2">
+        <span class="badge rounded-pill px-3 py-2 {% if item.item_type == 'lost' %}badge-lost{% else %}badge-found{% endif %}" style="font-size:.85rem;">
+          <i class="bi {% if item.item_type == 'lost' %}bi-exclamation-circle{% else %}bi-check-circle{% endif %} me-1"></i>
+          {{ item.get_item_type_display }}
+        </span>
+        <span class="badge rounded-pill px-3 py-2 badge-{{ item.category }}" style="font-size:.85rem;">
+          {{ item.get_category_display }}
+        </span>
+        <span class="badge rounded-pill px-3 py-2 badge-{{ item.status }}" style="font-size:.85rem;">
+          {{ item.get_status_display }}
+        </span>
+      </div>
+
+      <h1 class="fw-bold mb-3" style="font-size:1.8rem;">{{ item.title }}</h1>
+
+      <div class="card border-0 bg-white shadow-sm p-3 mb-4" style="border-radius:12px;">
+        <div class="meta-row">
+          <div class="meta-icon" style="background:#EFF6FF;"><i class="bi bi-geo-alt text-primary"></i></div>
+          <div>
+            <small class="text-muted d-block">Location</small>
+            <span class="fw-medium">{{ item.location }}</span>
+            {% if item.location_detail %}<br><small class="text-muted">{{ item.location_detail }}</small>{% endif %}
+          </div>
+        </div>
+        <div class="meta-row">
+          <div class="meta-icon" style="background:#F0FDF4;"><i class="bi bi-calendar3 text-success"></i></div>
+          <div>
+            <small class="text-muted d-block">Date</small>
+            <span class="fw-medium">{{ item.date|date:"F j, Y" }}</span>
+            {% if item.time_of_day %}<small class="text-muted ms-2">~{{ item.time_of_day|time:"g:i A" }}</small>{% endif %}
+          </div>
+        </div>
+        {% if item.brand or item.color %}
+        <div class="meta-row">
+          <div class="meta-icon" style="background:#FDF4FF;"><i class="bi bi-tag text-purple" style="color:#9333ea;"></i></div>
+          <div>
+            <small class="text-muted d-block">Details</small>
+            {% if item.brand %}<span class="fw-medium">{{ item.brand }}</span>{% endif %}
+            {% if item.color %}<span class="text-muted ms-2">· {{ item.color }}</span>{% endif %}
+          </div>
+        </div>
+        {% endif %}
+        <div class="meta-row" style="border:none;">
+          <div class="meta-icon" style="background:#FFF7ED;"><i class="bi bi-clock text-warning"></i></div>
+          <div><small class="text-muted d-block">Reported</small><span class="fw-medium">{{ item.created_at|date:"M j, Y g:i A" }}</span></div>
+        </div>
+      </div>
+
+      <h5 class="fw-bold mb-2">Description</h5>
+      <div class="card border-0 bg-white shadow-sm p-3 mb-4" style="border-radius:12px;">
+        <p class="mb-0" style="line-height:1.7; white-space:pre-wrap;">{{ item.description }}</p>
+      </div>
+
+      {% if item.status == 'resolved' %}
+      <div class="alert alert-success d-flex align-items-center gap-2">
+        <i class="bi bi-check-circle-fill fs-5"></i>
+        <div><strong>Resolved!</strong> This item has been recovered. Great news!</div>
+      </div>
+      {% endif %}
+
+      <!-- Possible Matches -->
+      {% if scored_matches %}
+      <h5 class="fw-bold mb-3 mt-4">
+        <i class="bi bi-intersect text-primary me-2"></i>Possible Matches
+        <span class="badge bg-primary rounded-pill ms-2" style="font-size:.75rem;">{{ scored_matches|length }}</span>
+      </h5>
+      <div class="row g-3">
+        {% for score, match in scored_matches %}<!-- score={{ score }} -->
+        <div class="col-sm-6">
+          <a href="{{ match.get_absolute_url }}" class="text-decoration-none">
+            <div class="match-card">
+              <div class="d-flex gap-2 mb-2">
+                <span class="badge rounded-pill {% if match.item_type == 'lost' %}badge-lost{% else %}badge-found{% endif %}">
+                  {{ match.get_item_type_display }}
+                </span>
+                <span class="badge rounded-pill badge-{{ match.category }}">{{ match.get_category_display }}</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-start mb-1">
+                <h6 class="fw-bold mb-0 text-dark">{{ match.title|truncatechars:45 }}</h6>
+                <span class="badge {% if score >= 70 %}bg-success{% elif score >= 40 %}bg-warning text-dark{% else %}bg-secondary{% endif %} ms-2" style="font-size:.7rem;">{{ score }}% match</span>
+              </div>
+              <p class="text-muted small mb-1"><i class="bi bi-geo-alt me-1"></i>{{ match.location|truncatechars:35 }}</p>
+              <p class="text-muted small mb-0"><i class="bi bi-calendar3 me-1"></i>{{ match.date|date:"M j, Y" }}</p>
+            </div>
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="mt-4 p-3 text-center" style="background:#f8f9fa;border-radius:12px;">
+        <i class="bi bi-intersect text-muted d-block mb-2 fs-3"></i>
+        <p class="text-muted small mb-0">No possible matches found yet. Check back later!</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Contact Owner Modal -->
+{% if user.is_authenticated and user != item.owner %}
+<div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:20px; border:none; overflow:hidden;">
+
+      <div class="modal-header border-0 pb-0" style="background:linear-gradient(135deg,#0F4C81,#1a6eb5); color:white;">
+        <div class="w-100 py-2">
+          <h5 class="modal-title fw-bold mb-1" id="contactModalLabel">
+            <i class="bi bi-envelope-fill me-2"></i>Send Message to Owner
+          </h5>
+          <p class="small mb-0" style="opacity:.8;">
+            About: <strong>{{ item.title }}</strong>
+          </p>
+        </div>
+        <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-4">
+
+        <!-- Sender info strip -->
+        <div class="d-flex align-items-center gap-3 p-3 mb-4 rounded-3" style="background:#f0f7ff; border:1px solid #c7d9f5;">
+          <div style="width:40px;height:40px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-person-fill text-white"></i>
+          </div>
+          <div class="flex-grow-1 overflow-hidden">
+            <div class="fw-semibold text-truncate">{{ request.user.get_full_name|default:request.user.username }}</div>
+            <div class="text-muted small text-truncate">{{ request.user.email }}</div>
+          </div>
+          <div>
+            <span class="badge" style="background:#D1FAE5; color:#065F46;">
+              <i class="bi bi-arrow-right me-1"></i>Sender
+            </span>
+          </div>
+        </div>
+
+        <form method="post" action="{% url 'items:contact' item.pk %}" id="contactForm">
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small text-uppercase" style="letter-spacing:.5px; color:#6b7280;">
+              Subject <span class="text-danger">*</span>
+            </label>
+            {{ contact_form.subject }}
+            {% if contact_form.subject.errors %}
+            <div class="text-danger small mt-1">{{ contact_form.subject.errors }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold small text-uppercase" style="letter-spacing:.5px; color:#6b7280;">
+              Message <span class="text-danger">*</span>
+            </label>
+            {{ contact_form.message }}
+            {% if contact_form.message.errors %}
+            <div class="text-danger small mt-1">{{ contact_form.message.errors }}</div>
+            {% endif %}
+          </div>
+
+          <div class="d-flex align-items-center gap-2 p-3 rounded-3 mb-4" style="background:#FFF7ED; border:1px solid #FED7AA;">
+            <i class="bi bi-info-circle text-warning flex-shrink-0"></i>
+            <p class="small mb-0 text-muted">
+              The owner will be notified by email and can reply directly to your address.
+            </p>
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary btn-lg" id="sendBtn">
+              <i class="bi bi-send-fill me-2"></i>Send Message
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Auto-open modal if form had validation errors
+  {% if show_contact_modal %}
+  document.addEventListener('DOMContentLoaded', function() {
+    new bootstrap.Modal(document.getElementById('contactModal')).show();
+  });
+  {% endif %}
+
+  // Show loading state on send
+  const contactForm = document.getElementById('contactForm');
+  const sendBtn = document.getElementById('sendBtn');
+  if (contactForm && sendBtn) {
+    contactForm.addEventListener('submit', function() {
+      sendBtn.disabled = true;
+      sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+    });
+  }
+</script>
+{% endblock %}

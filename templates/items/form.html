@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action }} - Campus Lost & Found{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <h1><i class="bi bi-plus-circle me-2"></i>{{ action }}</h1>
+    <p>Fill in the details below to submit your report</p>
+  </div>
+</div>
+
+<div class="container pb-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="card border-0 shadow" style="border-radius:20px; overflow:hidden;">
+        <div class="card-body p-4 p-md-5">
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <!-- Type selector (visual) -->
+            <div class="mb-4">
+              <label class="form-label fw-bold">Item Type <span class="text-danger">*</span></label>
+              <div class="row g-2">
+                <div class="col-6">
+                  <input type="radio" class="btn-check" name="item_type" id="type_lost" value="lost"
+                    {% if form.item_type.value == 'lost' %}checked{% endif %} required>
+                  <label class="btn btn-outline-danger w-100 py-3" for="type_lost">
+                    <i class="bi bi-exclamation-circle d-block fs-3 mb-1"></i>
+                    <strong>Lost</strong><br><small>I lost an item</small>
+                  </label>
+                </div>
+                <div class="col-6">
+                  <input type="radio" class="btn-check" name="item_type" id="type_found" value="found"
+                    {% if form.item_type.value == 'found' %}checked{% endif %} required>
+                  <label class="btn btn-outline-success w-100 py-3" for="type_found">
+                    <i class="bi bi-check-circle d-block fs-3 mb-1"></i>
+                    <strong>Found</strong><br><small>I found an item</small>
+                  </label>
+                </div>
+              </div>
+              {% if form.item_type.errors %}
+              <div class="text-danger small mt-1">{{ form.item_type.errors }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Title -->
+            <div class="mb-3">
+              <label class="form-label fw-bold" for="{{ form.title.id_for_label }}">
+                Item Title <span class="text-danger">*</span>
+              </label>
+              {{ form.title }}
+              {% if form.title.errors %}<div class="text-danger small mt-1">{{ form.title.errors }}</div>{% endif %}
+            </div>
+
+            <!-- Category -->
+            <div class="mb-3">
+              <label class="form-label fw-bold" for="{{ form.category.id_for_label }}">
+                Category <span class="text-danger">*</span>
+              </label>
+              {{ form.category }}
+              {% if form.category.errors %}<div class="text-danger small mt-1">{{ form.category.errors }}</div>{% endif %}
+            </div>
+
+            <!-- Description -->
+            <div class="mb-3">
+              <label class="form-label fw-bold" for="{{ form.description.id_for_label }}">
+                Description <span class="text-danger">*</span>
+              </label>
+              {{ form.description }}
+              <small class="text-muted">Include distinguishing features, color, brand, etc.</small>
+              {% if form.description.errors %}<div class="text-danger small mt-1">{{ form.description.errors }}</div>{% endif %}
+            </div>
+
+            <!-- Location -->
+            <div class="mb-3">
+              <label class="form-label fw-bold" for="{{ form.location.id_for_label }}">
+                Location <span class="text-danger">*</span>
+              </label>
+              {{ form.location }}
+              {% if form.location.errors %}<div class="text-danger small mt-1">{{ form.location.errors }}</div>{% endif %}
+            </div>
+
+            <!-- Location Detail -->
+            <div class="mb-3">
+              <label class="form-label fw-bold" for="{{ form.location_detail.id_for_label }}">
+                Location Detail <small class="text-muted fw-normal">(Optional)</small>
+              </label>
+              {{ form.location_detail }}
+              <small class="text-muted">e.g. "Near the window, second floor"</small>
+              {% if form.location_detail.errors %}<div class="text-danger small mt-1">{{ form.location_detail.errors }}</div>{% endif %}
+            </div>
+
+            <!-- Brand & Color row -->
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label fw-bold" for="{{ form.brand.id_for_label }}">
+                  Brand <small class="text-muted fw-normal">(Optional)</small>
+                </label>
+                {{ form.brand }}
+                {% if form.brand.errors %}<div class="text-danger small mt-1">{{ form.brand.errors }}</div>{% endif %}
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-bold" for="{{ form.color.id_for_label }}">
+                  Color <small class="text-muted fw-normal">(Optional)</small>
+                </label>
+                {{ form.color }}
+                {% if form.color.errors %}<div class="text-danger small mt-1">{{ form.color.errors }}</div>{% endif %}
+              </div>
+            </div>
+
+            <!-- Date & Time row -->
+            <div class="row g-3 mb-3">
+              <div class="col-7">
+                <label class="form-label fw-bold" for="{{ form.date.id_for_label }}">
+                  Date <span class="text-danger">*</span>
+                </label>
+                {{ form.date }}
+                {% if form.date.errors %}<div class="text-danger small mt-1">{{ form.date.errors }}</div>{% endif %}
+              </div>
+              <div class="col-5">
+                <label class="form-label fw-bold" for="{{ form.time_of_day.id_for_label }}">
+                  Time <small class="text-muted fw-normal">(Optional)</small>
+                </label>
+                {{ form.time_of_day }}
+                {% if form.time_of_day.errors %}<div class="text-danger small mt-1">{{ form.time_of_day.errors }}</div>{% endif %}
+              </div>
+            </div>
+
+            <!-- Image -->
+            <div class="mb-4">
+              <label class="form-label fw-bold" for="{{ form.image.id_for_label }}">
+                Image <small class="text-muted fw-normal">(Optional, max 5MB)</small>
+              </label>
+              {% if item and item.image %}
+              <div class="mb-2">
+                <img src="{{ item.image.url }}" alt="Current image" style="max-height:120px;border-radius:8px;">
+                <p class="text-muted small mt-1">Upload a new image to replace the current one.</p>
+              </div>
+              {% endif %}
+              {{ form.image }}
+              {% if form.image.errors %}<div class="text-danger small mt-1">{{ form.image.errors }}</div>{% endif %}
+            </div>
+
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-check-lg me-2"></i>{{ action }}
+              </button>
+              <a href="{% if item %}{{ item.get_absolute_url }}{% else %}{% url 'items:list' %}{% endif %}" class="btn btn-outline-secondary">
+                Cancel
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

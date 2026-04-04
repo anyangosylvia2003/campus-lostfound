@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Custody Log{% endblock %}
+{% block content %}
+<div class="page-header"><div class="container"><h1><i class="bi bi-archive me-2"></i>Custody Log</h1></div></div>
+<div class="container pb-5">
+  <div class="mb-3 d-flex gap-2">
+    <a href="?status=" class="btn btn-sm {% if not status_filter %}btn-primary{% else %}btn-outline-secondary{% endif %}">All</a>
+    {% for value, label in custody_statuses %}
+    <a href="?status={{ value }}" class="btn btn-sm {% if status_filter == value %}btn-primary{% else %}btn-outline-secondary{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </div>
+  <div class="card border-0 shadow-sm" style="border-radius:16px;">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light"><tr><th>Item</th><th>Custody Status</th><th>Storage</th><th>Received By</th><th>Date</th><th></th></tr></thead>
+        <tbody>
+          {% for record in page_obj %}
+          <tr>
+            <td class="fw-semibold">{{ record.item.title|truncatechars:40 }}</td>
+            <td><span class="badge {% if record.custody_status == 'in_custody' %}bg-primary{% elif record.custody_status == 'returned' %}bg-success{% else %}bg-warning text-dark{% endif %}">{{ record.get_custody_status_display }}</span></td>
+            <td><small>{{ record.storage_location }}</small></td>
+            <td><small>{{ record.received_by.get_short_name|default:record.received_by.username }}</small></td>
+            <td><small>{{ record.received_at|date:"M j, Y" }}</small></td>
+            <td><a href="{% url 'security:custody_detail' record.pk %}" class="btn btn-sm btn-outline-primary">View</a></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="text-center text-muted py-4">No custody records found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

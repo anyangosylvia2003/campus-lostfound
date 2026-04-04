@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Submit Claim — {{ item.title }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <h1><i class="bi bi-hand-index me-2"></i>Submit Claim</h1>
+    <p>Provide proof of ownership to claim this item from security</p>
+  </div>
+</div>
+<div class="container pb-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+
+      <div class="alert alert-warning d-flex gap-3 mb-4" style="border-radius:12px;">
+        <i class="bi bi-shield-exclamation fs-4 flex-shrink-0 mt-1"></i>
+        <div>
+          <strong>Security Verification Required</strong><br>
+          Your claim will be reviewed by security staff. You must provide accurate details that prove the item is yours.
+          Submitting false information is a serious offence and will be logged.
+        </div>
+      </div>
+
+      <!-- Item being claimed -->
+      <div class="card border-0 shadow-sm mb-4" style="border-radius:14px; background:#f0f7ff; border:1px solid #c7d9f5 !important;">
+        <div class="card-body p-4">
+          <div class="d-flex gap-2 mb-2">
+            <span class="badge badge-found rounded-pill">Found</span>
+            <span class="badge badge-{{ item.category }} rounded-pill">{{ item.get_category_display }}</span>
+            <span class="badge bg-primary rounded-pill">In Custody</span>
+          </div>
+          <h5 class="fw-bold mb-1">{{ item.title }}</h5>
+          <p class="text-muted small mb-1"><i class="bi bi-geo-alt me-1"></i>Found at: {{ item.location }}</p>
+          <p class="text-muted small mb-0"><i class="bi bi-calendar3 me-1"></i>{{ item.date|date:"F j, Y" }}</p>
+          {% if item.custody %}
+          <p class="text-muted small mb-0 mt-1"><i class="bi bi-archive me-1"></i>Held at: {{ item.custody.storage_location }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card border-0 shadow p-4" style="border-radius:20px;">
+        <h5 class="fw-bold mb-1">Proof of Ownership</h5>
+        <p class="text-muted small mb-4">Be as specific as possible. Security will cross-check your answers against their records.</p>
+
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-4">
+            <label class="form-label fw-semibold">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<small class="text-muted d-block mt-1">{{ field.help_text }}</small>{% endif %}
+            {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors }}</div>{% endif %}
+          </div>
+          {% endfor %}
+
+          <div class="p-3 rounded-3 mb-4" style="background:#FFF7ED; border:1px solid #FED7AA;">
+            <p class="small mb-0">
+              <i class="bi bi-info-circle text-warning me-2"></i>
+              By submitting this claim, you confirm that the information provided is true and accurate.
+              Security staff will review your claim and contact you at <strong>{{ request.user.email }}</strong>.
+            </p>
+          </div>
+
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="bi bi-send me-2"></i>Submit Claim for Review
+            </button>
+            <a href="{% url 'items:detail' item.pk %}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
