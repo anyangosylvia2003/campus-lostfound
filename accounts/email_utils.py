@@ -39,12 +39,12 @@ def send_campus_email(subject, message, recipient_email,
     logger.info(f"[EMAIL] type={email_type} to={recipient_email} "
                 f"debug={debug} brevo_key_set={bool(brevo_api_key)}")
 
-    # ── Use Brevo API if key is available (works in both dev and prod) ────────
+    # ── Use Brevo API if key is available ─────────────────────────────────────
     if brevo_api_key:
         return _send_via_brevo(subject, message, recipient_email,
-                               html_message, log, brevo_api_key)
+                               html_message, log, brevo_api_key, EmailLog)
 
-    # ── Development fallback: console backend ─────────────────────────────────
+    # ── Development: console backend ──────────────────────────────────────────
     if debug:
         from django.core.mail import send_mail
         try:
@@ -91,10 +91,15 @@ def send_campus_email(subject, message, recipient_email,
 
 
 def _send_via_brevo(subject, message, recipient_email,
-                    html_message, log, api_key):
-    """Send via Brevo HTTP API — no SMTP, works on Render free plan."""
-    sender_email = getattr(settings, 'EMAIL_USER', '')
+                    html_message, log, api_key, EmailLog):
+    """Send via Brevo HTTP API — no SMTP needed."""
+
+    # Use the verified sender email from Brevo account
+    sender_email = getattr(settings, 'BREVO_SENDER_EMAIL',
+                           getattr(settings, 'EMAIL_USER', ''))
     sender_name  = 'Campus Lost and Found'
+
+    logger.info(f"[EMAIL:brevo] Sending from {sender_email} to {recipient_email}")
 
     payload = {
         'sender':      {'name': sender_name, 'email': sender_email},
@@ -107,9 +112,9 @@ def _send_via_brevo(subject, message, recipient_email,
 
     data    = json.dumps(payload).encode('utf-8')
     headers = {
-        'accept':        'application/json',
-        'content-type':  'application/json',
-        'api-key':       api_key,
+        'accept':       'application/json',
+        'content-type': 'application/json',
+        'api-key':      api_key,
     }
 
     try:
